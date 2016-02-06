@@ -1,0 +1,539 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dengue in Singapore</title>
+  <meta charset="utf-8" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+  <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css" />
+  <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/font-awesome/4.0.0/css/font-awesome.css" />
+  <link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="http://watson.lennardvoogdt.nl/Leaflet.awesome-markers/dist/leaflet.awesome-markers.css" />
+
+
+
+  <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+  <script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
+  <script src="http://watson.lennardvoogdt.nl/Leaflet.awesome-markers/dist/leaflet.awesome-markers.js"></script>
+  <script src="http://makinacorpus.github.io/Leaflet.FileLayer/leaflet.filelayer.js"></script>
+  <script src="http://makinacorpus.github.io/Leaflet.FileLayer/togeojson/togeojson.js"></script>
+
+  <script src="https://dl.dropboxusercontent.com/u/88516747/ParkConnector.geojson"></script>
+  <script src="https://dl.dropboxusercontent.com/u/88516747/BreedingHabitat.geojson"></script>
+  <script src="https://dl.dropboxusercontent.com/u/88516747/CombinedDengueCases.geojson"></script>
+
+  <script src="https://dl.dropboxusercontent.com/u/88516747/AutoLinker.js"></script>
+
+  <script type="text/javascript" src="https://dl.dropboxusercontent.com/u/88516747/population.geojson"></script>
+
+
+
+  <style>
+  .awesome-marker i {
+    font-size: 11px;
+    margin-top: 10px;
+    color: white;
+  }
+
+  body {
+    overflow:hidden;
+  }
+
+
+  .info {
+    padding: 6px 8px;
+    font: 14px/16px Arial, Helvetica, sans-serif;
+    background: white;
+    background: rgba(255,255,255,0.8);
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    border-radius: 5px;
+  }
+  .info h4 {
+    margin: 0 0 5px;
+    color: #777;
+  }
+
+  .legend {
+    text-align: left;
+    line-height: 18px;
+    color: #555;
+  }
+  .legend i {
+    width: 18px;
+    height: 18px;
+    float: left;
+    margin-right: 8px;
+    opacity: 0.7;
+  }
+  .title {
+    background-color: rgba(255, 255, 255, 0.5);
+    position: absolute;
+    z-index: 1;
+    text-align: center;
+    width: 400px;
+  }
+
+  </style>
+
+
+</head>
+
+<body>
+
+  <div class="container-fluid">
+
+    <div class="row">
+
+      <div class="col-md-12">
+        <div class="title"><h4><i>Dengue in Singapore</i></h4></div>
+
+        <div id="map" style="height: 100vh"></div>
+      </div>
+    </div>
+  </div>
+
+
+
+  <script>
+
+//setting the map coordiantes
+var map = L.map('map').setView([1.36286, 103.81634], 12);
+
+var standard = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpandmbXliNDBjZWd2M2x6bDk3c2ZtOTkifQ._QA7i5Mpkd_m30IGElHziw', {
+  maxZoom: 18,
+  attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
+  '<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
+  'Imagery © <a href="http://mapbox.com">Mapbox</a>',
+  id: 'mapbox.outdoors'
+});
+
+
+   // L.marker([1.36595, 103.80398]).addTo(map)
+     // .bindPopup("<b>Hello world!</b><br />I am a popup.").openPopup();
+     var popup = L.popup();
+
+
+     // load GeoJSON from an external file
+     $.getJSON("",function(data){
+    // add GeoJSON layer to the map once the file is loaded
+    L.geoJson(data).addTo(map);
+  });
+
+
+//dengue case
+
+
+var dc = new L.LayerGroup();
+$.getJSON("https://dl.dropboxusercontent.com/u/88516747/Dengue_Cases.geojson",function(data){
+
+  L.geoJson(data,{
+    pointToLayer: function(feature,latlng){
+
+     if (feature.properties.COUNT_POST < 4) {
+      return L.circleMarker(latlng, dengueCircle3).setRadius(feature.properties.COUNT_POST *5);
+    } else if (feature.properties.COUNT_POST >3 && feature.properties.COUNT_POST < 7) {
+      return L.circleMarker(latlng, dengueCircle6).setRadius(feature.properties.COUNT_POST *5);
+    }  else if (feature.properties.COUNT_POST >6 && feature.properties.COUNT_POST <10) {
+      return L.circleMarker(latlng, dengueCircle9).setRadius(feature.properties.COUNT_POST *5);
+    }else if (feature.properties.COUNT_POST >10 && feature.properties.COUNT_POST <13) {
+      return L.circleMarker(latlng, dengueCircle12).setRadius(feature.properties.COUNT_POST *5);
+    } else {
+      return L.circleMarker(latlng, dengueCircle15).setRadius(feature.properties.COUNT_POST *5);
+    }
+
+
+  },
+  onEachFeature: function (feature, layer) { layer.bindPopup('<b>No. of dengue cases at this point: '+feature.properties.COUNT_POST+'</b>')}
+}).addTo(dc);
+});
+
+var dengueCircle3 = {
+  radius: 8,
+  fillColor: "#fc9272",
+  color: "#000",
+  weight: 1,
+  opacity: 1,
+  fillOpacity: 0.5 
+};
+var dengueCircle6 = {
+  radius: 8,
+  fillColor: "#fb6a4a",
+  color: "#000",
+  weight: 1,
+  opacity: 1,
+  fillOpacity: 0.5 
+};
+var dengueCircle9 = {
+  radius: 8,
+  fillColor: "#ef3b2c",
+  color: "#000",
+  weight: 1,
+  opacity: 1,
+  fillOpacity: 0.5 
+};
+var dengueCircle12 = {
+  radius: 8,
+  fillColor: "#cb181d",
+  color: "#000",
+  weight: 1,
+  opacity: 1,
+  fillOpacity: 0.5 
+};
+
+var dengueCircle15 = {
+  radius: 8,
+  fillColor: "#99000d",
+  color: "#000",
+  weight: 1,
+  opacity: 1,
+  fillOpacity: 0.5 
+};
+
+
+
+//Breeding habitat
+function pop_BreedingHabitat(feature, layer) {          
+  var popupContent = '<table><tr><th scope="row">Name</th><td>' + Autolinker.link(String(feature.properties['Name'])) + '</td></tr><tr><th scope="row">Descriptio</th><td>' + Autolinker.link(String(feature.properties['Descriptio'])) + '</td></tr></table>';
+  layer.bindPopup(popupContent);
+}
+
+function doStyleBreedingHabitat(feature) {
+  return {
+    color: 'black',
+    fillColor: 'yellow',
+    weight: 1,
+    dashArray: '',
+    opacity: 1.0,
+    fillOpacity: 1.0
+  };
+
+}
+var exp_BreedingHabitatJSON = new L.geoJson(exp_BreedingHabitat,{
+  onEachFeature: pop_BreedingHabitat,
+  style: doStyleBreedingHabitat
+});
+
+
+//Parks
+var parks = new L.LayerGroup();
+$.getJSON("https://dl.dropboxusercontent.com/u/88516747/parks.geojson",function(data){
+  var parksIcon = L.AwesomeMarkers.icon({
+    icon: 'leaf',
+    markerColor: 'green',
+    spin: true
+  });
+  L.geoJson(data,{
+    pointToLayer: function(feature,latlng){
+      var marker = L.marker(latlng,{icon: parksIcon});
+      marker.bindPopup("<center>Parks <br>" + feature.properties.Name+ "</center>");
+      return marker;
+    }
+  }).addTo(parks);
+});
+
+
+/*CHAS clinics
+var chas = new L.LayerGroup();
+$.getJSON("https://dl.dropboxusercontent.com/u/88516747/chas.geojson",function(data){
+  var chasIcon = L.AwesomeMarkers.icon({
+    icon: 'plus',
+    markerColor: 'red'
+  });
+
+  L.geoJson(data,{
+    pointToLayer: function(feature,latlng){
+      var marker = L.marker(latlng,{icon: chasIcon});
+      marker.bindPopup("<center>CHAS clinics <br>" + feature.properties.Name+"</center>");
+      return marker;
+    }
+  }).addTo(chas);
+});*/
+
+
+//Schools
+var schools = new L.LayerGroup();
+var othersIcon = L.AwesomeMarkers.icon({
+  icon: 'book',
+  markerColor: 'blue'
+});
+var primaryIcon = L.AwesomeMarkers.icon({
+  icon: 'book',
+  markerColor: 'darkgreen'
+});
+var secondaryIcon = L.AwesomeMarkers.icon({
+  icon: 'book',
+  markerColor: 'orange'
+});
+var JCIcon = L.AwesomeMarkers.icon({
+  icon: 'book',
+  markerColor: 'purple'
+});
+
+
+$.getJSON("https://dl.dropboxusercontent.com/u/88516747/Schools.geojson",function(data){
+
+  L.geoJson(data,{
+    pointToLayer: function(feature,latlng){
+
+      var marker = L.marker(latlng,{icon: othersIcon});
+
+      if (feature.properties.SCH_TYPE == "primary") {
+       marker = L.marker(latlng,{icon: primaryIcon});
+       marker.bindPopup("<center>Primary School <br>" + feature.properties.SCH_NAME+"</center>");
+
+     } else if (feature.properties.SCH_TYPE == "secondary") {
+      marker = L.marker(latlng,{icon: secondaryIcon});
+      marker.bindPopup("<center>Secondary School <br>" + feature.properties.SCH_NAME+"</center>");
+    } else if (feature.properties.SCH_TYPE == "JC") {
+     marker = L.marker(latlng,{icon: JCIcon});
+     marker.bindPopup("<center>Junior College <br>" + feature.properties.SCH_NAME+"</center>");
+   } else {
+    marker.bindPopup("<center>"+feature.properties.SCH_TYPE + " <br>" + feature.properties.SCH_NAME+"</center>");
+  }
+
+
+  return marker;
+}
+}).addTo(schools);
+});
+
+//legend for schools
+var schoolLegend = L.control({position: 'bottomright'});
+
+schoolLegend.onAdd = function (map) {
+
+  var div = L.DomUtil.create('div', 'info legend'),
+  grades = ["primary", "secondary", "JC", "Others"],
+  labels = [],
+  from, to;
+
+  for (var i = 0; i < grades.length; i++) {
+    from = grades[i];
+    
+
+    labels.push(
+      '<div ><i style="background:' + getColorIcon(from) + '"></i>'+ from+'</div> ');
+  }
+
+  div.innerHTML = labels.join('<br>');
+  return div;
+};
+
+ // get color depending on population density value
+ function getColorIcon(d) {
+  return d == "primary" ? 'darkgreen' :
+  d == "secondary"  ? 'orange' :
+  d == "JC"  ? 'purple' : 
+  'blue';
+}
+
+
+//park connector
+
+function pop_ParkConnectorLoop(feature, layer) {          
+
+  var popupContent = '<table><tr><th scope="row">Name</th><td>' + Autolinker.link(String(feature.properties['Name'])) + '</td></tr><tr><th scope="row">Descriptio</th><td>' + Autolinker.link(String(feature.properties['Descriptio'])) + '</td></tr></table>';
+  layer.bindPopup(popupContent);
+}
+
+function doStyleParkConnectorLoop(feature) {
+  return {
+    weight: 2.5,
+    color: '#0c30de',
+    dashArray: '',
+    opacity: 1.0,
+    fillOpacity: 1.0
+  };
+}
+
+
+
+var exp_ParkConnectorLoopJSON = new L.geoJson(exp_ParkConnectorLoop,{
+  onEachFeature: pop_ParkConnectorLoop,
+  style: doStyleParkConnectorLoop
+});
+
+
+
+//choropleth map
+// control that shows state info on hover
+var info = L.control();
+
+info.onAdd = function (map) {
+  this._div = L.DomUtil.create('div', 'info');
+  this.update();
+  return this._div;
+};
+
+info.update = function (props) {
+
+
+  this._div.innerHTML = '<h4>SG Population Density</h4>' +  (props ?
+    '<h5><b>'+ props.DGPZ_NAME + ' Area</b></h5>' + props.DGPSZ_NAME + '<br />' + props.Census2000_TOTALPOP + ' people / mi<sup>2</sup>'
+    : 'Hover over Singapore');
+};
+
+
+
+    // get color depending on population density value
+    function getColor(d) {
+      return d > 87199 ? '#810f7c' :
+      d > 44518  ? '#8856a7' :
+      d > 21731  ? '#8c96c6' :
+      d > 7741  ? '#9ebcda' :
+      d > 0   ? '#bfd3e6' :      
+      '#edf8fb';
+    }
+
+    function style(feature) {
+      return {
+        weight: 0.5,
+        opacity: 1,
+        color: 'black',
+        dashArray: '3',
+        fillOpacity: 0.7,
+        fillColor: getColor(feature.properties.Census2000_TOTALPOP)
+      };
+    }
+
+    function highlightFeature(e) {
+      var layer = e.target;
+
+      layer.setStyle({
+        weight: 5,
+        color: '#666',
+        dashArray: '',
+        fillOpacity: 0.7
+      });
+
+     /* if (!L.Browser.ie && !L.Browser.opera) {
+        layer.bringToFront();
+      }*/
+
+      info.update(layer.feature.properties);
+    }
+
+    var geojson;
+
+    function resetHighlight(e) {
+      geojson.resetStyle(e.target);
+      info.update();
+    }
+
+    function zoomToFeature(e) {
+      map.fitBounds(e.target.getBounds());
+    }
+
+    function onEachFeature(feature, layer) {
+      layer.on({
+        mouseover: highlightFeature,
+        mouseout: resetHighlight,
+        click: zoomToFeature
+      });
+    }
+
+    geojson = L.geoJson(statesData, {
+      style: style,
+      onEachFeature: onEachFeature
+    })
+
+    map.attributionControl.addAttribution('Population data &copy;');
+
+
+//legend for population density
+var legend = L.control({position: 'bottomright'});
+
+legend.onAdd = function (map) {
+
+  var div = L.DomUtil.create('div', 'info legend'),
+  grades = [0, 7741, 21731, 44518, 87199],
+  labels = [],
+  from, to;
+
+  for (var i = 0; i < grades.length; i++) {
+    from = grades[i];
+    to = grades[i + 1];
+
+    labels.push(
+      '<i style="background:' + getColor(from + 1) + '"></i> ' +
+      from + (to ? '&ndash;' + to : '+'));
+  }
+
+  div.innerHTML = labels.join('<br>');
+  return div;
+};
+
+
+map.on('overlayadd', function (eventLayer) {
+    // Switch to the Population legend...
+    if (eventLayer.name === 'Population density') {
+      legend.addTo(this);
+      info.addTo(this);
+
+
+    } else if (eventLayer.name == "Schools") {
+     schoolLegend.addTo(this);
+   }
+ });
+
+map.on('overlayremove', function (eventLayer) {
+    // Switch to the Population legend...
+    if (eventLayer.name === 'Population density') {
+      this.removeControl(legend);    
+      this.removeControl(info);     
+    } else if (eventLayer.name == "Schools") {
+      this.removeControl(schoolLegend); 
+    }
+  });
+
+
+
+L.Control.FileLayerLoad.LABEL = '<i class="fa fa-folder-open"></i>';
+L.Control.fileLayerLoad({
+  fitBounds: true,
+  layerOptions: {style: style,
+   pointToLayer: function (data, latlng) {
+    return L.marker(latlng);
+  }},
+}).addTo(map);
+
+
+//alternative base map
+var mbAttr = 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, ' +
+'<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
+'Imagery © <a href="http://mapbox.com">Mapbox</a>',
+mbUrl = 'https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoicmFiaWFoa2hhaXJ5IiwiYSI6ImNpazgxdDBidDAwdm11aGt3ejZiYXFjNDEifQ.YquCtcRsMovN1MwkSv25fQ';
+var grayscale   = L.tileLayer(mbUrl, {id: 'mapbox.light', attribution: mbAttr});
+var streets   = L.tileLayer(mbUrl, {id: 'mapbox.emerald', attribution: mbAttr}).addTo(map);
+
+
+var baseMaps = {
+  "Detailed": standard,
+  "Clean": streets,
+  "Plain": grayscale
+
+};
+
+dc.addTo(map);
+
+
+//add layers 
+var layers = {
+  "Population density": geojson,
+  "Parks": parks,
+  "Schools": schools,
+  "Park Connector":  exp_ParkConnectorLoopJSON,
+  "Dengue Cases": dc,
+  "Dengue Breeding Place": exp_BreedingHabitatJSON
+  
+};
+
+
+L.control.layers(baseMaps,layers).addTo(map);
+
+
+</script>
+</body>
+</html>
